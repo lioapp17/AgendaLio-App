@@ -1,6 +1,6 @@
 // sw.js — Offline-first para tu app (GitHub Pages / HTTPS)
 const CACHE_VERSION = "v1.0.0";
-const CACHE_NAME = `bioparque-parte-diario-${CACHE_VERSION}`;
+const CACHE_NAME = `Mi Agenda Personal-${CACHE_VERSION}`;
 
 // Ajustá esta lista según los archivos reales del proyecto.
 // Si usás un solo index con <style> y <script> internos, esto alcanza.
@@ -59,3 +59,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
