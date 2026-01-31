@@ -1,5 +1,5 @@
 {
-  "name": "agenda sd",
+  "name": "Mi Agenda Personal",
   "short_name": "agenda",
   "start_url": "./",
   "display": "fullscreen",
@@ -18,3 +18,4 @@
     }
   ]
 }
+
