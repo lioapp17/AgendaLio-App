@@ -70,6 +70,9 @@
   footer{padding:14px 18px;color:var(--muted);font-size:13px;text-align:center;opacity:0.8}
   .records-hint{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
   .list.is-hidden{display:none}
+  .overview-section{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);margin-bottom:10px}
+  .overview-section h4{margin:0 0 6px;font-size:14px}
+  .overview-list{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.5}
 @media (max-width:980px){ .app{flex-direction:column;padding:12px} .sidebar{width:100%;order:2} main{order:1} }
 
   /* Mobile layout polish */
@@ -506,6 +509,7 @@ input::placeholder, textarea::placeholder{
         <div class="actions" style="margin-top:10px">
           <button id="btnCopyDataset" class="btn">Copiar dataset</button>
           <button id="btnDownloadDataset" class="btn-ghost">Descargar JSON</button>
+          <button id="btnOverview" class="btn-ghost">Ver panorama</button>
         </div>
         <div class="small muted" id="datasetStatus">Incluye los últimos registros, agenda, notas y recordatorios.</div>
       </div>
@@ -595,7 +599,7 @@ input::placeholder, textarea::placeholder{
       <div style="margin-top:8px"><input id="agendaFileInput" type="file" accept=".pdf,image/*,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" /></div>
       <div class="actions">
         <button id="btnAddAgenda" class="btn">Agregar a agenda</button>
-        <button id="btnExportAgenda" class="btn-ghost">Exportar CSV</button>
+      -  <button id="btnExportAgenda" class="btn-ghost">Exportar CSV</button>
       </div>
 
       <hr style="margin:14px 0;border:none;border-top:1px solid rgba(0,0,0,0.04)" />
@@ -805,6 +809,20 @@ input::placeholder, textarea::placeholder{
   </div>
 </div>
 
+<div id="overviewBackdrop" class="modal-backdrop">
+  <div class="modal" style="max-width:760px;">
+    <div class="modal-header">
+      <div>
+        <div class="small muted">Panorama</div>
+        <h3 id="overviewTitle" style="margin:2px 0 0">Resumen general</h3>
+      </div>
+      <button id="overviewClose" class="modal-close">Cerrar</button>
+    </div>
+    <div class="small muted" id="overviewMeta"></div>
+    <div id="overviewBody" style="margin-top:12px"></div>
+  </div>
+</div>
+
 
 
 <div id="profileBackdrop" class="modal-backdrop">
@@ -895,6 +913,7 @@ const btnImportJson = document.getElementById('btnImportJson');
 const importFile = document.getElementById('importFile');
 const btnCopyDataset = document.getElementById('btnCopyDataset');
 const btnDownloadDataset = document.getElementById('btnDownloadDataset');
+const btnOverview = document.getElementById('btnOverview');
 const datasetStatus = document.getElementById('datasetStatus');
 const datasetCard = document.getElementById('datasetCard');
 const fileInput = document.getElementById('fileInput');
@@ -904,6 +923,10 @@ const agendaModalTitle = document.getElementById('agendaModalTitle');
 const agendaModalDate = document.getElementById('agendaModalDate');
 const agendaModalNotes = document.getElementById('agendaModalNotes');
 const agendaModalFiles = document.getElementById('agendaModalFiles');
+const overviewBackdrop = document.getElementById('overviewBackdrop');
+const overviewClose = document.getElementById('overviewClose');
+const overviewMeta = document.getElementById('overviewMeta');
+const overviewBody = document.getElementById('overviewBody');
 
 const recordsListEl = document.getElementById('recordsList');
 const filterInput = document.getElementById('filterInput');
@@ -1287,6 +1310,49 @@ function saveProfile(profile){
   function updateDatasetStatus(){
     if(!datasetStatus) return;
     datasetStatus.textContent = `Registros: ${DATA.records.length} · Agenda: ${DATA.agenda.length} · Notas: ${DATA.notes.length} · Recordatorios: ${DATA.reminders.length}`;
+  }
+
+  function renderOverview(){
+    if(!overviewBody || !overviewMeta) return;
+    const records = DATA.records || [];
+    const agenda = DATA.agenda || [];
+    const notes = DATA.notes || [];
+    const reminders = DATA.reminders || [];
+
+    overviewMeta.textContent = `Registros: ${records.length} · Agenda: ${agenda.length} · Notas: ${notes.length} · Recordatorios: ${reminders.length}`;
+
+    const buildList = (items)=> {
+      if(!items.length) return `<div class="muted">Sin registros.</div>`;
+      return `<ul class="overview-list">${items.map(item=>`<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+    };
+
+    const latestRecords = records.slice().reverse().slice(0,5)
+      .map(r=>`${r.title || '(sin título)'} · ${formatDate(r.dateCreated)}`);
+    const upcomingAgenda = agenda.slice().sort((a,b)=> (a.date || '').localeCompare(b.date || '')).slice(0,5)
+      .map(a=>`${a.title || '(sin título)'} · ${a.date || ''} ${a.time || ''}`.trim());
+    const latestNotes = notes.slice().reverse().slice(0,5)
+      .map(n=>`${(n.text || '').slice(0,70)}${(n.text || '').length > 70 ? '…' : ''}`);
+    const upcomingReminders = reminders.slice().sort((a,b)=> (a.date || '').localeCompare(b.date || '')).slice(0,5)
+      .map(r=>`${r.title || '(sin título)'} · ${r.date || ''} ${r.time || ''}`.trim());
+
+    overviewBody.innerHTML = `
+      <div class="overview-section">
+        <h4>Contactos recientes</h4>
+        ${buildList(latestRecords)}
+      </div>
+      <div class="overview-section">
+        <h4>Agenda próxima</h4>
+        ${buildList(upcomingAgenda)}
+      </div>
+      <div class="overview-section">
+        <h4>Notas recientes</h4>
+        ${buildList(latestNotes)}
+      </div>
+      <div class="overview-section">
+        <h4>Recordatorios próximos</h4>
+        ${buildList(upcomingReminders)}
+      </div>
+    `;
   }
 
   function renderQuickLinks(){
@@ -1894,6 +1960,32 @@ if(btnNextMonth) btnNextMonth.addEventListener('click', ()=>{ calendarRefDate.se
       URL.revokeObjectURL(a.href);
     });
   }
+
+  function openOverview(){
+    if(!overviewBackdrop) return;
+    renderOverview();
+    overviewBackdrop.style.display = 'flex';
+  }
+
+  function closeOverview(){
+    if(!overviewBackdrop) return;
+    overviewBackdrop.style.display = 'none';
+  }
+
+  if(btnOverview){
+    btnOverview.addEventListener('click', openOverview);
+  }
+  if(overviewClose){
+    overviewClose.addEventListener('click', closeOverview);
+  }
+  if(overviewBackdrop){
+    overviewBackdrop.addEventListener('click', (e)=>{ if(e.target === overviewBackdrop) closeOverview(); });
+  }
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && overviewBackdrop && overviewBackdrop.style.display === 'flex'){
+      closeOverview();
+    }
+  });
 
   filterInput.addEventListener('input', ()=> {
     renderRecords(filterInput.value);
