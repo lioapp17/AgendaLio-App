@@ -443,6 +443,7 @@ input::placeholder, textarea::placeholder{
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
     <div style="display:none" class="small">Carpeta: <span id="workPath" class="muted">(no seleccionada)</span></div>
     <button style="display:none" id="btnPickDir" class="btn-ghost">Seleccionar carpeta</button>
+    <button id="btnOverviewMain" class="btn-ghost">Panorama</button>
     <button id="btnSaveAll" class="btn">💾 Guardar todo</button>
   </div>
 </header>
@@ -914,6 +915,7 @@ const importFile = document.getElementById('importFile');
 const btnCopyDataset = document.getElementById('btnCopyDataset');
 const btnDownloadDataset = document.getElementById('btnDownloadDataset');
 const btnOverview = document.getElementById('btnOverview');
+const btnOverviewMain = document.getElementById('btnOverviewMain');
 const datasetStatus = document.getElementById('datasetStatus');
 const datasetCard = document.getElementById('datasetCard');
 const fileInput = document.getElementById('fileInput');
@@ -1974,6 +1976,9 @@ if(btnNextMonth) btnNextMonth.addEventListener('click', ()=>{ calendarRefDate.se
 
   if(btnOverview){
     btnOverview.addEventListener('click', openOverview);
+  }
+  if(btnOverviewMain){
+    btnOverviewMain.addEventListener('click', openOverview);
   }
   if(overviewClose){
     overviewClose.addEventListener('click', closeOverview);
