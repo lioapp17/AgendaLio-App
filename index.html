@@ -68,6 +68,8 @@
   .badge{background:linear-gradient(120deg, rgba(125,211,252,0.25), rgba(192,132,252,0.25));padding:4px 8px;border-radius:999px;font-size:12px;color:var(--text);border:1px solid rgba(255,255,255,0.08)}
   .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   footer{padding:14px 18px;color:var(--muted);font-size:13px;text-align:center;opacity:0.8}
+  .records-hint{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+  .list.is-hidden{display:none}
 @media (max-width:980px){ .app{flex-direction:column;padding:12px} .sidebar{width:100%;order:2} main{order:1} }
 
   /* Mobile layout polish */
@@ -479,7 +481,11 @@ input::placeholder, textarea::placeholder{
         <button id="btnNewRecord" class="btn">+ Nuevo</button>
       </div>
       <input id="filterInput" placeholder="Buscar por nombre, teléfono, email o etiqueta" />
-      <div class="list" id="recordsList" style="margin-top:10px"></div>
+      <div class="small muted records-hint" id="recordsHint">
+        <span id="recordsHintText">Escribí para buscar o desplegá la lista completa.</span>
+        <button id="recordsToggle" class="btn-ghost" type="button">Mostrar todos</button>
+      </div>
+      <div class="list is-hidden" id="recordsList" style="margin-top:10px"></div>
       <div class="small" style="margin-top:8px">Auto-guardado: <label><input id="autoSave" type="checkbox" checked /> sí</label></div>
     </div>
 
@@ -902,6 +908,10 @@ const agendaModalFiles = document.getElementById('agendaModalFiles');
 const recordsListEl = document.getElementById('recordsList');
 const filterInput = document.getElementById('filterInput');
 const btnNewRecord = document.getElementById('btnNewRecord');
+const recordsHint = document.getElementById('recordsHint');
+const recordsHintText = document.getElementById('recordsHintText');
+const recordsToggle = document.getElementById('recordsToggle');
+let recordsExpanded = false;
 
 const todayLabel = document.getElementById('todayLabel');
 const agendaTitle = document.getElementById('agendaTitle');
@@ -1450,6 +1460,26 @@ function showPanel(name){
     }
   }
 
+function updateRecordsListVisibility(){
+    if(!recordsListEl) return;
+    const hasQuery = ((filterInput && filterInput.value) || '').trim().length > 0;
+    const showList = hasQuery || recordsExpanded;
+    recordsListEl.classList.toggle('is-hidden', !showList);
+
+    if(!recordsHint || !recordsHintText) return;
+    if(hasQuery){
+      recordsHint.style.display = 'none';
+      return;
+    }
+    recordsHint.style.display = 'flex';
+    recordsHintText.textContent = recordsExpanded
+      ? 'Lista completa visible.'
+      : 'Escribí para buscar o desplegá la lista completa.';
+    if(recordsToggle){
+      recordsToggle.textContent = recordsExpanded ? 'Ocultar lista' : 'Mostrar todos';
+    }
+  }
+
 function renderRecords(filter=''){
     recordsListEl.innerHTML = '';
     const q = (filter||'').trim().toLowerCase();
@@ -1471,6 +1501,7 @@ function renderRecords(filter=''){
       recordsListEl.appendChild(wrapper);
     });
     updateDatasetStatus();
+    updateRecordsListVisibility();
   }
 
 function openRecord(id){
@@ -1864,7 +1895,19 @@ if(btnNextMonth) btnNextMonth.addEventListener('click', ()=>{ calendarRefDate.se
     });
   }
 
-  filterInput.addEventListener('input', ()=> renderRecords(filterInput.value));
+  filterInput.addEventListener('input', ()=> {
+    renderRecords(filterInput.value);
+    updateRecordsListVisibility();
+  });
+  if(recordsToggle){
+    recordsToggle.addEventListener('click', ()=>{
+      recordsExpanded = !recordsExpanded;
+      updateRecordsListVisibility();
+      if(recordsExpanded){
+        renderRecords(filterInput.value);
+      }
+    });
+  }
 btnNewRecord.addEventListener('click', ()=>{
   const title = prompt('Nombre del contacto:') || '';
   if(!title) return;
