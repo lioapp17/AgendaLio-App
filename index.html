@@ -73,6 +73,8 @@
   .overview-section{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);margin-bottom:10px}
   .overview-section h4{margin:0 0 6px;font-size:14px}
   .overview-list{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.5}
+  .overview-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  #overviewBackdrop .modal{max-height:80vh;overflow:auto}
 @media (max-width:980px){ .app{flex-direction:column;padding:12px} .sidebar{width:100%;order:2} main{order:1} }
 
   /* Mobile layout polish */
@@ -97,6 +99,8 @@
     .dock-actions .btn, .dock-actions .btn-ghost{width:100%;justify-content:center;}
     .dock-links{grid-template-columns:1fr;}
     .dock-btn{min-height:58px;}
+    .dock.collapsed .dock-links{display:none;}
+    .dock.collapsed .dock-actions{display:none;}
 
     .calendar-wrap{grid-template-columns:1fr;gap:10px;}
     .calendar-grid{gap:4px;}
@@ -457,6 +461,7 @@ input::placeholder, textarea::placeholder{
     <div class="dock-actions">
       <button id="btnConfigLinks" class="btn-ghost">⚙️ Editar accesos</button>
       <button id="btnIaHighlight" class="btn">🤖 Salida IA</button>
+      <button id="btnDockToggle" class="btn-ghost">Ocultar accesos</button>
     </div>
   </div>
   <div id="quickLinks" class="dock-links"></div>
@@ -909,6 +914,7 @@ const btnSaveAll = document.getElementById('btnSaveAll');
 const btnConfigLinks = document.getElementById('btnConfigLinks');
 const quickLinksEl = document.getElementById('quickLinks');
 const btnIaHighlight = document.getElementById('btnIaHighlight');
+const btnDockToggle = document.getElementById('btnDockToggle');
 const btnExportJson = document.getElementById('btnExportJson');
 const btnImportJson = document.getElementById('btnImportJson');
 const importFile = document.getElementById('importFile');
@@ -1341,18 +1347,41 @@ function saveProfile(profile){
       <div class="overview-section">
         <h4>Contactos recientes</h4>
         ${buildList(latestRecords)}
+        <div class="overview-actions">
+          <button class="btn-ghost" type="button" data-overview-panel="home">Ver contactos</button>
+        </div>
       </div>
       <div class="overview-section">
         <h4>Agenda próxima</h4>
         ${buildList(upcomingAgenda)}
+        <div class="overview-actions">
+          <button class="btn-ghost" type="button" data-overview-panel="agenda">Ir a agenda</button>
+        </div>
       </div>
       <div class="overview-section">
         <h4>Notas recientes</h4>
         ${buildList(latestNotes)}
+        <div class="overview-actions">
+          <button class="btn-ghost" type="button" data-overview-panel="notes">Ir a notas</button>
+        </div>
       </div>
       <div class="overview-section">
         <h4>Recordatorios próximos</h4>
         ${buildList(upcomingReminders)}
+        <div class="overview-actions">
+          <button class="btn-ghost" type="button" data-overview-panel="reminders">Ir a recordatorios</button>
+        </div>
+      </div>
+    `;
+    overviewBody.querySelectorAll('[data-overview-panel]').forEach((btn)=>{
+      btn.addEventListener('click', ()=>{
+        const panel = btn.getAttribute('data-overview-panel');
+        if(panel){
+          showPanel(panel);
+          closeOverview();
+        }
+      });
+    });
       </div>
     `;
   }
@@ -1400,6 +1429,14 @@ function saveProfile(profile){
       datasetCard.scrollIntoView({ behavior:'smooth', block:'center' });
       setTimeout(()=> datasetCard.classList.remove('glow'), 1400);
     }
+  }
+
+  function updateDockToggle(){
+    if(!btnDockToggle) return;
+    const dock = btnDockToggle.closest('.dock');
+    if(!dock) return;
+    const collapsed = dock.classList.contains('collapsed');
+    btnDockToggle.textContent = collapsed ? 'Mostrar accesos' : 'Ocultar accesos';
   }
 
 // ---------- File system helpers ----------
@@ -1905,7 +1942,15 @@ if(pinBackdrop){
 btnPickDir.addEventListener('click', pickWorkDir);
 btnSaveAll.addEventListener('click', saveAllToDisk);
 if(btnConfigLinks) btnConfigLinks.addEventListener('click', configureAllQuickLinks);
-if(btnIaHighlight) btnIaHighlight.addEventListener('click', highlightDatasetPanel);
+  if(btnIaHighlight) btnIaHighlight.addEventListener('click', highlightDatasetPanel);
+  if(btnDockToggle){
+    btnDockToggle.addEventListener('click', ()=>{
+      const dock = btnDockToggle.closest('.dock');
+      if(!dock) return;
+      dock.classList.toggle('collapsed');
+      updateDockToggle();
+    });
+  }
 if(agendaModalClose) agendaModalClose.addEventListener('click', closeAgendaDetail);
 if(agendaBackdrop) agendaBackdrop.addEventListener('click', (e)=>{ if(e.target===agendaBackdrop) closeAgendaDetail(); });
 if(btnPrevMonth) btnPrevMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()-1); renderCalendarViews(); });
@@ -2862,6 +2907,15 @@ Indicá tareas repetidas, delegables y automatizables.
      * Init
      ************************/
     registerActivityListeners();
+    if(window.matchMedia && window.matchMedia('(max-width: 720px)').matches){
+      const dock = btnDockToggle ? btnDockToggle.closest('.dock') : null;
+      if(dock){
+        dock.classList.add('collapsed');
+        updateDockToggle();
+      }
+    } else {
+      updateDockToggle();
+    }
     renderAll();
   
 })();
