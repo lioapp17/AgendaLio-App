@@ -438,6 +438,7 @@ input::placeholder, textarea::placeholder{
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
     <div style="display:none" class="small">Carpeta: <span id="workPath" class="muted">(no seleccionada)</span></div>
     <button style="display:none" id="btnPickDir" class="btn-ghost">Seleccionar carpeta</button>
+    <button id="btnIndice" class="btn-ghost">Índice</button>
     <button id="btnSaveAll" class="btn">💾 Guardar todo</button>
   </div>
 </header>
@@ -799,6 +800,27 @@ input::placeholder, textarea::placeholder{
   </div>
 </div>
 
+<div id="indiceBackdrop" class="modal-backdrop">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div>
+        <div class="small muted">Índice</div>
+        <h3 style="margin:2px 0 0">Ir a sección</h3>
+      </div>
+      <button id="indiceClose" class="modal-close">Cerrar</button>
+    </div>
+    <div class="actions" style="margin-top:6px">
+      <button class="btn-ghost" type="button" data-indice="home">Inicio</button>
+      <button class="btn-ghost" type="button" data-indice="agenda">Agenda</button>
+      <button class="btn-ghost" type="button" data-indice="buzon">Buzón</button>
+      <button class="btn-ghost" type="button" data-indice="calendar">Calendario</button>
+      <button class="btn-ghost" type="button" data-indice="files">Archivos</button>
+      <button class="btn-ghost" type="button" data-indice="notes">Notas</button>
+      <button class="btn-ghost" type="button" data-indice="reminders">Recordatorios</button>
+    </div>
+  </div>
+</div>
+
 
 
 <div id="profileBackdrop" class="modal-backdrop">
@@ -881,6 +903,7 @@ const dataFiles = {
 const btnPickDir = document.getElementById('btnPickDir');
 const workPathEl = document.getElementById('workPath');
 const btnSaveAll = document.getElementById('btnSaveAll');
+const btnIndice = document.getElementById('btnIndice');
 const btnConfigLinks = document.getElementById('btnConfigLinks');
 const quickLinksEl = document.getElementById('quickLinks');
 const btnIaHighlight = document.getElementById('btnIaHighlight');
@@ -898,6 +921,8 @@ const agendaModalTitle = document.getElementById('agendaModalTitle');
 const agendaModalDate = document.getElementById('agendaModalDate');
 const agendaModalNotes = document.getElementById('agendaModalNotes');
 const agendaModalFiles = document.getElementById('agendaModalFiles');
+const indiceBackdrop = document.getElementById('indiceBackdrop');
+const indiceClose = document.getElementById('indiceClose');
 
 const recordsListEl = document.getElementById('recordsList');
 const filterInput = document.getElementById('filterInput');
@@ -1806,11 +1831,33 @@ if(pinBackdrop){
 btnPickDir.addEventListener('click', pickWorkDir);
 btnSaveAll.addEventListener('click', saveAllToDisk);
 if(btnConfigLinks) btnConfigLinks.addEventListener('click', configureAllQuickLinks);
-if(btnIaHighlight) btnIaHighlight.addEventListener('click', highlightDatasetPanel);
-if(agendaModalClose) agendaModalClose.addEventListener('click', closeAgendaDetail);
-if(agendaBackdrop) agendaBackdrop.addEventListener('click', (e)=>{ if(e.target===agendaBackdrop) closeAgendaDetail(); });
-if(btnPrevMonth) btnPrevMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()-1); renderCalendarViews(); });
-if(btnNextMonth) btnNextMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()+1); renderCalendarViews(); });
+  if(btnIaHighlight) btnIaHighlight.addEventListener('click', highlightDatasetPanel);
+  if(agendaModalClose) agendaModalClose.addEventListener('click', closeAgendaDetail);
+  if(agendaBackdrop) agendaBackdrop.addEventListener('click', (e)=>{ if(e.target===agendaBackdrop) closeAgendaDetail(); });
+  if(btnPrevMonth) btnPrevMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()-1); renderCalendarViews(); });
+  if(btnNextMonth) btnNextMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()+1); renderCalendarViews(); });
+  if(btnIndice){
+    btnIndice.addEventListener('click', ()=>{
+      if(indiceBackdrop) indiceBackdrop.style.display = 'flex';
+    });
+  }
+  if(indiceClose){
+    indiceClose.addEventListener('click', ()=>{
+      if(indiceBackdrop) indiceBackdrop.style.display = 'none';
+    });
+  }
+  if(indiceBackdrop){
+    indiceBackdrop.addEventListener('click', (e)=>{ if(e.target === indiceBackdrop) indiceBackdrop.style.display = 'none'; });
+    indiceBackdrop.querySelectorAll('[data-indice]').forEach((btn)=>{
+      btn.addEventListener('click', ()=>{
+        const panel = btn.getAttribute('data-indice');
+        if(panel){
+          showPanel(panel);
+        }
+        indiceBackdrop.style.display = 'none';
+      });
+    });
+  }
 
   btnExportJson.addEventListener('click', ()=>{
     const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
