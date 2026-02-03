@@ -1226,16 +1226,8 @@ let calendarRefDate = new Date();
   function readLS(){ try { const v=localStorage.getItem(LS_KEY); return v? JSON.parse(v): null; } catch(e){return null} }
   function writeLS(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(DATA)); }catch(e){console.error(e)} }
   function formatDate(d){ if(!d) return '-'; return new Date(d).toLocaleDateString(); }
-function formatISODate(d){ return d.toISOString().split('T')[0]; }
-function startOfWeek(date){ const d = new Date(date); const day = (d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
+  function formatISODate(d){ return d.toISOString().split('T')[0]; }
+  function startOfWeek(date){ const d = new Date(date); const day = (d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
   
   // ---------- PIN (bloqueo local) ----------
 const PIN_KEY = 'agenda_pin_v1';
