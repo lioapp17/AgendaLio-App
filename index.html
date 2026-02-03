@@ -447,6 +447,7 @@ input::placeholder, textarea::placeholder{
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
     <div style="display:none" class="small">Carpeta: <span id="workPath" class="muted">(no seleccionada)</span></div>
     <button style="display:none" id="btnPickDir" class="btn-ghost">Seleccionar carpeta</button>
+    <button id="btnIndice" class="btn-ghost">Índice</button>
     <button id="btnOverviewMain" class="btn-ghost">Panorama</button>
     <button id="btnSaveAll" class="btn">💾 Guardar todo</button>
   </div>
@@ -815,6 +816,24 @@ input::placeholder, textarea::placeholder{
   </div>
 </div>
 
+<div id="indiceBackdrop" class="modal-backdrop">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <div>
+        <div class="small muted">Índice</div>
+        <h3 style="margin:2px 0 0">Ir a sección</h3>
+      </div>
+      <button id="indiceClose" class="modal-close">Cerrar</button>
+    </div>
+    <div class="actions" style="margin-top:6px">
+      <button class="btn-ghost" type="button" data-indice="home">Inicio</button>
+      <button class="btn-ghost" type="button" data-indice="agenda">Agenda</button>
+      <button class="btn-ghost" type="button" data-indice="buzon">Buzón</button>
+      <button class="btn-ghost" type="button" data-indice="calendar">Calendario</button>
+      <button class="btn-ghost" type="button" data-indice="files">Archivos</button>
+      <button class="btn-ghost" type="button" data-indice="notes">Notas</button>
+      <button class="btn-ghost" type="button" data-indice="reminders">Recordatorios</button>
+    </div>
 <div id="overviewBackdrop" class="modal-backdrop">
   <div class="modal" style="max-width:760px;">
     <div class="modal-header">
@@ -932,6 +951,8 @@ const agendaModalTitle = document.getElementById('agendaModalTitle');
 const agendaModalDate = document.getElementById('agendaModalDate');
 const agendaModalNotes = document.getElementById('agendaModalNotes');
 const agendaModalFiles = document.getElementById('agendaModalFiles');
+const indiceBackdrop = document.getElementById('indiceBackdrop');
+const indiceClose = document.getElementById('indiceClose');
 const overviewBackdrop = document.getElementById('overviewBackdrop');
 const overviewClose = document.getElementById('overviewClose');
 const overviewMeta = document.getElementById('overviewMeta');
@@ -1227,8 +1248,16 @@ let calendarRefDate = new Date();
   function readLS(){ try { const v=localStorage.getItem(LS_KEY); return v? JSON.parse(v): null; } catch(e){return null} }
   function writeLS(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(DATA)); }catch(e){console.error(e)} }
   function formatDate(d){ if(!d) return '-'; return new Date(d).toLocaleDateString(); }
-  function formatISODate(d){ return d.toISOString().split('T')[0]; }
-  function startOfWeek(date){ const d = new Date(date); const day = (d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
+function formatISODate(d){ return d.toISOString().split('T')[0]; }
+function startOfWeek(date){ const d = new Date(date); const day = (d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
   
   // ---------- PIN (bloqueo local) ----------
 const PIN_KEY = 'agenda_pin_v1';
@@ -1944,6 +1973,32 @@ btnPickDir.addEventListener('click', pickWorkDir);
 btnSaveAll.addEventListener('click', saveAllToDisk);
 if(btnConfigLinks) btnConfigLinks.addEventListener('click', configureAllQuickLinks);
   if(btnIaHighlight) btnIaHighlight.addEventListener('click', highlightDatasetPanel);
+  if(agendaModalClose) agendaModalClose.addEventListener('click', closeAgendaDetail);
+  if(agendaBackdrop) agendaBackdrop.addEventListener('click', (e)=>{ if(e.target===agendaBackdrop) closeAgendaDetail(); });
+  if(btnPrevMonth) btnPrevMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()-1); renderCalendarViews(); });
+  if(btnNextMonth) btnNextMonth.addEventListener('click', ()=>{ calendarRefDate.setMonth(calendarRefDate.getMonth()+1); renderCalendarViews(); });
+  if(btnIndice){
+    btnIndice.addEventListener('click', ()=>{
+      if(indiceBackdrop) indiceBackdrop.style.display = 'flex';
+    });
+  }
+  if(indiceClose){
+    indiceClose.addEventListener('click', ()=>{
+      if(indiceBackdrop) indiceBackdrop.style.display = 'none';
+    });
+  }
+  if(indiceBackdrop){
+    indiceBackdrop.addEventListener('click', (e)=>{ if(e.target === indiceBackdrop) indiceBackdrop.style.display = 'none'; });
+    indiceBackdrop.querySelectorAll('[data-indice]').forEach((btn)=>{
+      btn.addEventListener('click', ()=>{
+        const panel = btn.getAttribute('data-indice');
+        if(panel){
+          showPanel(panel);
+        }
+        indiceBackdrop.style.display = 'none';
+      });
+    });
+  }
   if(btnDockToggle){
     btnDockToggle.addEventListener('click', ()=>{
       const dock = btnDockToggle.closest('.dock');
